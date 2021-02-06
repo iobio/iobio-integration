@@ -1,40 +1,60 @@
-const backendMap = {
-  "https://mosaic.chpc.utah.edu": [
-    "mosaic.chpc.utah.edu/gru/api/v1",
-    "mosaic.chpc.utah.edu/gru-dev",
-  ],
-  "https://cddrc.utah.edu": [
-    "mosaic.chpc.utah.edu/gru/api/v1",
-    "mosaic.chpc.utah.edu/gru-dev",
-  ],
-  "https://mosaic-staging.chpc.utah.edu": [
-    "mosaic-staging.chpc.utah.edu/gru/api/v1",
-  ],
-};
+let launchConfig;
+export function getLaunchConfig() {
 
-export function createBackendManager(dataSourceUrl) {
-  if (!backendMap[dataSourceUrl]) {
-    return new BackendManager(['backend.iobio.io']);
+  if (launchConfig) {
+    return launchConfig;
   }
 
-  return new BackendManager(backendMap[dataSourceUrl]);
-}
+  const urlParams = new URLSearchParams(location.search);
 
-class BackendManager {
-  constructor(backends) {
-    this.backends = backends;
+  const backendMapPromise = new Promise((resolve, reject) => {
+    fetch('/config/backend_map.json').then(r => r.json()).then(backendMap => {
+      resolve(backendMap);
+    });
+  });
+
+  const promises = [backendMapPromise];
+
+  if (urlParams.has('config')) {
+    const configPromise = new Promise((resolve, reject) => {
+      fetch(urlParams.get('config')).then(r => r.json()).then(config => {
+        resolve(config);
+      });
+    });
+    promises.push(configPromise);
   }
 
-  defaultBackend() {
-    return this.backends[0];
-  }
+  return Promise.all(promises).then(results => {
 
-  getBackend(backend) {
-    if (this.backends.includes(backend)) {
-      return backend;
+    const backendMap = results[0];
+
+    let params = {};
+    if (results.length > 1) {
+      params = results[1];
     }
-    else {
-      return this.defaultBackend();
+
+    for (const key of urlParams.keys()) {
+      const array = urlParams.getAll(key);
+
+      if (array.length > 1) {
+        params[key] = urlParams.getAll(key);
+      }
+      else {
+        params[key] = urlParams.get(key);
+      }
     }
-  }
+
+    let backendUrl = 'backend.iobio.io';
+    const backends = backendMap[params.source];
+    if (backends) {
+      backendUrl = backends.includes(params.backend_url) ? params.backend_url : backends[0]; 
+    }
+
+    launchConfig = {
+      backendUrl,
+      params,
+    };
+
+    return launchConfig;
+  });
 }
