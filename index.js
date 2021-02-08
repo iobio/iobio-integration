@@ -68,18 +68,20 @@ export async function getLaunchConfig() {
     }
 
     let source = params.source;
-    if (!source) {
+    if (!source && params.bam) {
       const url = new URL(params.bam);
       source = url.origin;
     }
 
-    let backend;
-    const backends = backendMap[source];
-    if (backends) {
-      backend = backends.includes(params.backend) ? params.backend : backends[0]; 
+
+    let backend = backendMap.anySource[0]; 
+
+    if (backendMap.anySource.includes(params.backend) || 
+      (backendMap[source] && backendMap[source].includes[params.backend])) {
+      backend = params.backend;
     }
-    else {
-      backend = backendMap.anySource.includes(params.backend) ? params.backend : backendMap.anySource[0]; 
+    else if (backendMap[source]) {
+      backend = backendMap[source][0];
     }
 
     launchConfig = {
