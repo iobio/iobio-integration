@@ -1,5 +1,5 @@
 let launchConfig;
-export function getLaunchConfig() {
+export async function getLaunchConfig() {
 
   if (launchConfig) {
     return launchConfig;
