@@ -41,10 +41,16 @@ async function getLaunchConfig(options) {
 
   const promises = [];
 
+  let backendMap = defaultBackendMap;
+  let params = {};
+
+  // load backendMap and/or config in parallel
+
   if (options.backendMapLocation) {
     const backendMapPromise = new Promise((resolve, reject) => {
-      fetch(options.backendMapLocation).then(r => r.json()).then(backendMap => {
-        resolve(backendMap);
+      fetch(options.backendMapLocation).then(r => r.json()).then(loadedBackendMap => {
+        backendMap = loadedBackendMap
+        resolve();
       });
     });
     promises.push(backendMapPromise);
@@ -53,7 +59,8 @@ async function getLaunchConfig(options) {
   if (urlParams.has('config')) {
     const configPromise = new Promise((resolve, reject) => {
       fetch(urlParams.get('config')).then(r => r.json()).then(config => {
-        resolve(config);
+        params = config;
+        resolve();
       });
     });
     promises.push(configPromise);
@@ -61,24 +68,17 @@ async function getLaunchConfig(options) {
   else if (options.configLocation) {
     const configPromise = new Promise((resolve, reject) => {
       fetch(options.configLocation).then(r => r.json()).then(config => {
-        resolve(config);
+        params = config;
+        resolve();
       });
     });
     promises.push(configPromise);
   }
 
-  return Promise.all(promises).then(results => {
+  // wait for both to be ready
+  return Promise.all(promises).then(() => {
 
-    let backendMap = defaultBackendMap;
-    if (results.length > 0) {
-      backendMap = results[0];
-    }
-
-    let params = {};
-    if (results.length > 1) {
-      params = results[1];
-    }
-
+    // url params have precendence over config params
     for (const key of urlParams.keys()) {
       const array = urlParams.getAll(key);
 
@@ -96,8 +96,7 @@ async function getLaunchConfig(options) {
       source = url.origin;
     }
 
-
-    let backend = backendMap.anySource[0]; 
+    let backend = backendMap.anySource.length > 0 ? backendMap.anySource[0] : 'backend.iobio.io'; 
 
     if (backendMap.anySource.includes(params.backend) || 
       (backendMap[source] && backendMap[source].includes[params.backend])) {
