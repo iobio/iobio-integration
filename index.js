@@ -15,20 +15,35 @@ const defaultBackendMap = {
 };
 
 
-let launchConfig;
-export async function getLaunchConfig() {
-
-  if (launchConfig) {
-    return launchConfig;
+export class LaunchConfigManager {
+  constructor(options) {
+    this.options = options;
   }
+
+  async getConfig() {
+    return new Promise((resolve, reject) => {
+      if (!this.config) {
+        getLaunchConfig(this.options).then(config => {
+          this.config = config;
+          resolve(config);
+        });
+      }
+      else {
+        resolve(this.config);
+      }
+    });
+  }
+}
+
+async function getLaunchConfig(options) {
 
   const urlParams = new URLSearchParams(location.search);
 
   const promises = [];
 
-  if (urlParams.get('backend_map') === 'local') {
+  if (options.backendMapLocation) {
     const backendMapPromise = new Promise((resolve, reject) => {
-      fetch('/config/backend_map.json').then(r => r.json()).then(backendMap => {
+      fetch(options.backendMapLocation).then(r => r.json()).then(backendMap => {
         resolve(backendMap);
       });
     });
@@ -38,6 +53,14 @@ export async function getLaunchConfig() {
   if (urlParams.has('config')) {
     const configPromise = new Promise((resolve, reject) => {
       fetch(urlParams.get('config')).then(r => r.json()).then(config => {
+        resolve(config);
+      });
+    });
+    promises.push(configPromise);
+  }
+  else if (options.configLocation) {
+    const configPromise = new Promise((resolve, reject) => {
+      fetch(options.configLocation).then(r => r.json()).then(config => {
         resolve(config);
       });
     });
@@ -84,8 +107,7 @@ export async function getLaunchConfig() {
       backend = backendMap[source][0];
     }
 
-    launchConfig = {
-      source,
+    const launchConfig = {
       backendUrl: backend,
       params,
     };
