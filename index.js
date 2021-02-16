@@ -1,16 +1,16 @@
 const defaultBackendMap = {
   "anySource": [
-    "backend.iobio.io",
-    "mosaic.chpc.utah.edu/gru-dev",
+    "https://backend.iobio.io",
+    "https://mosaic.chpc.utah.edu/gru-dev",
   ],
   "https://mosaic.chpc.utah.edu": [
-    "mosaic.chpc.utah.edu/gru/api/v1",
+    "https://mosaic.chpc.utah.edu/gru/api/v1",
   ],
   "https://cddrc.utah.edu": [
-    "mosaic.chpc.utah.edu/gru/api/v1",
+    "https://mosaic.chpc.utah.edu/gru/api/v1",
   ],
   "https://mosaic-staging.chpc.utah.edu": [
-    "mosaic-staging.chpc.utah.edu/gru/api/v1",
+    "https://mosaic-staging.chpc.utah.edu/gru/api/v1",
   ]
 };
 
