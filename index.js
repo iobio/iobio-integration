@@ -55,6 +55,15 @@ async function getLaunchConfig(options) {
     });
     promises.push(backendMapPromise);
   }
+  else if (urlParams.get('backend_map') === 'local') {
+    const backendMapPromise = new Promise((resolve, reject) => {
+      fetch('/config/backend_map.json').then(r => r.json()).then(loadedBackendMap => {
+        backendMap = loadedBackendMap
+        resolve();
+      });
+    });
+    promises.push(backendMapPromise);
+  }
 
   if (urlParams.has('config')) {
     const configPromise = new Promise((resolve, reject) => {
@@ -96,7 +105,7 @@ async function getLaunchConfig(options) {
       source = url.origin;
     }
 
-    let backend = backendMap.anySource.length > 0 ? backendMap.anySource[0] : 'backend.iobio.io'; 
+    let backend = backendMap.anySource.length > 0 ? backendMap.anySource[0] : 'https://backend.iobio.io'; 
 
     if (backendMap.anySource.includes(params.backend) || 
       (backendMap[source] && backendMap[source].includes[params.backend])) {
